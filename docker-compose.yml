@@ -1,0 +1,57 @@
+version: "3.7"
+
+services:
+  nginx:
+    depends_on:
+      - client
+      - backend
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: ./nginx
+    ports:
+      - '80:80'
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    #ports:
+    #  - '3000:3000'
+    restart: on-failure
+    container_name: client
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    #ports:
+    #  - '5000:5000'
+    restart: on-failure
+    container_name: flask
+    #env_file:
+    #  - ./env/backend.env
+
+    #Use "environment" for now:
+    environment:
+      - APP_NAME=backend
+    expose:
+      - 8080
+  #local mysql db, until we get aws db
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./mysql:/var/lib/mysql
+    depends_on:
+      - client
+    links:
+      - client:db
+
+volumes:
+  mysql: 
